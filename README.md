@@ -1,6 +1,5 @@
 # Youtube Video, Audio, Playlist Downloader Mobile Application
 
-APK Link : https://drive.google.com/file/d/1kv3k3Q6SZrb6j3dgToNnJplW2cXNMUEB/view?usp=sharing
 
 <p>
   <img src="https://github.com/user-attachments/assets/e999b9be-daf8-49d8-80ff-7513293d3eb8" alt="Screenshot_1723971443" width="250"/>
