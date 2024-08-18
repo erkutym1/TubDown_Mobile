@@ -3,6 +3,7 @@ Youtube Video, Audio, Playlist Downloader Mobile Application
 
 
 ![Screenshot_1723971443](https://github.com/user-attachments/assets/e999b9be-daf8-49d8-80ff-7513293d3eb8)
+<img src="https://github.com/user-attachments/assets/e999b9be-daf8-49d8-80ff-7513293d3eb8" alt="Açıklama" width="30"/>
 ![Screenshot_1723971446](https://github.com/user-attachments/assets/174ff1bc-525f-432d-b87e-5b88a2505bec)
 ![Screenshot_1723971448](https://github.com/user-attachments/assets/14cb5d36-4a4f-4119-b9b2-d786cb7968d3)
 ![Screenshot_1723971523](https://github.com/user-attachments/assets/b290c47b-bd93-4ea4-a26f-5ff4bf81b4b2)
