@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:tubdown/linkle.dart';
 import 'package:tubdown/arama.dart';
 import 'package:tubdown/liste.dart';
+import 'package:tubdown/indirilenler.dart'; // Import the IndirilenlerPage
 
 void main() {
   runApp(MyApp());
@@ -47,6 +48,11 @@ class MyApp extends StatelessWidget {
               builder: (context) => ListePage(),
               settings: settings,
             );
+          case '/indirilenler': // Add route for IndirilenlerPage
+            return MaterialPageRoute(
+              builder: (context) => IndirilenlerPage(),
+              settings: settings,
+            );
           default:
             return null;
         }
@@ -90,12 +96,22 @@ class MainScreen extends StatelessWidget {
               ),
               SizedBox(height: 6),
               Container(
-                margin: EdgeInsets.only(bottom: 100), // Butonlar arasında 6 piksel boşluk bırak
+                margin: EdgeInsets.only(bottom: 35), // Butonlar arasında 6 piksel boşluk bırak
                 child: ElevatedButton(
                   onPressed: () {
                     Navigator.of(context).push(_createPageRoute(ListePage()));
                   },
                   child: Text('Liste İndir'),
+                ),
+              ),
+              SizedBox(height: 6), // Butonlar arasında boşluk bırakmak için
+              Container(
+                margin: EdgeInsets.only(bottom: 100), // Butonlar arasında 6 piksel boşluk bırak
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(context).push(_createPageRoute(IndirilenlerPage()));
+                  },
+                  child: Text('İndirilenler'),
                 ),
               ),
             ],

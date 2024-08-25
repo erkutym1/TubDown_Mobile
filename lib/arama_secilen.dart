@@ -5,6 +5,11 @@ import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:video_player/video_player.dart';
+import 'package:audioplayers/audioplayers.dart';
+import 'video_player_screen.dart';
+import 'audio_player_screen.dart';
+
 
 class AramaSecilenPage extends StatefulWidget {
   final Video video;
@@ -22,9 +27,11 @@ class _AramaSecilenPageState extends State<AramaSecilenPage> {
   List<String> _availableResolutions = [];
   List<String> _availableBitrates = [];
   late YoutubeExplode _youtubeExplode;
-  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-  FlutterLocalNotificationsPlugin();
+  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
   final FlutterFFmpeg _flutterFFmpeg = FlutterFFmpeg();
+  bool _isDownloading = false;
+  bool _showPlayButton = false;
+  String? _downloadedFilePath;
 
   @override
   void initState() {
@@ -36,12 +43,8 @@ class _AramaSecilenPageState extends State<AramaSecilenPage> {
   }
 
   Future<void> _initializeNotifications() async {
-    final AndroidInitializationSettings initializationSettingsAndroid =
-    AndroidInitializationSettings('@mipmap/ic_launcher');
-
-    final InitializationSettings initializationSettings =
-    InitializationSettings(android: initializationSettingsAndroid);
-
+    final AndroidInitializationSettings initializationSettingsAndroid = AndroidInitializationSettings('@mipmap/ic_launcher');
+    final InitializationSettings initializationSettings = InitializationSettings(android: initializationSettingsAndroid);
     await flutterLocalNotificationsPlugin.initialize(initializationSettings);
   }
 
@@ -62,10 +65,7 @@ class _AramaSecilenPageState extends State<AramaSecilenPage> {
       final manifest = await _youtubeExplode.videos.streamsClient.getManifest(widget.video.url);
       final audioStreams = manifest.audioOnly;
       setState(() {
-        _availableBitrates = audioStreams
-            .map((e) => '${e.bitrate.kiloBitsPerSecond} kbps')
-            .toSet()
-            .toList();
+        _availableBitrates = audioStreams.map((e) => '${e.bitrate.kiloBitsPerSecond} kbps').toSet().toList();
       });
     } catch (e) {
       print('Bitrate’ler alınırken bir hata oluştu: $e');
@@ -73,14 +73,16 @@ class _AramaSecilenPageState extends State<AramaSecilenPage> {
   }
 
   Future<void> _requestPermissions() async {
-    await [
-      Permission.storage,
-    ].request();
+    await [Permission.storage].request();
   }
 
   Future<void> _downloadFile() async {
+    setState(() {
+      _isDownloading = true;
+      _showPlayButton = false;
+    });
+
     try {
-      // Notify user that download has started
       await _showNotification('Download Started', 'Downloading ${widget.video.title} as $_selectedFormat', 0);
 
       final url = widget.video.url;
@@ -93,6 +95,11 @@ class _AramaSecilenPageState extends State<AramaSecilenPage> {
     } catch (e) {
       print('Bir hata oluştu: $e');
       await _showNotification('Download Failed', 'An error occurred: $e', 0);
+    } finally {
+      setState(() {
+        _isDownloading = false;
+        _showPlayButton = true;
+      });
     }
   }
 
@@ -102,12 +109,9 @@ class _AramaSecilenPageState extends State<AramaSecilenPage> {
     StreamInfo? audioStreamInfo;
 
     if (_selectedFormat == 'Video') {
-      // En yüksek ses bitrate'ini seç
-      audioStreamInfo = manifest.audioOnly
-          .reduce((a, b) => a.bitrate.kiloBitsPerSecond > b.bitrate.kiloBitsPerSecond ? a : b);
+      audioStreamInfo = manifest.audioOnly.reduce((a, b) => a.bitrate.kiloBitsPerSecond > b.bitrate.kiloBitsPerSecond ? a : b);
 
-      videoStreamInfo = manifest.videoOnly
-          .firstWhere(
+      videoStreamInfo = manifest.videoOnly.firstWhere(
               (e) => e.videoQualityLabel == _selectedResolution,
           orElse: () => throw Exception('Uygun video akışı bulunamadı.')
       );
@@ -134,10 +138,13 @@ class _AramaSecilenPageState extends State<AramaSecilenPage> {
       await videoFile.delete();
       await audioFile.delete();
 
+      setState(() {
+        _downloadedFilePath = outputFile.path;
+      });
+
       await _showNotification('Download Complete', 'File saved to ${outputFile.path}', 100);
     } else {
-      audioStreamInfo = manifest.audioOnly
-          .firstWhere(
+      audioStreamInfo = manifest.audioOnly.firstWhere(
               (e) => '${e.bitrate.kiloBitsPerSecond} kbps' == _selectedBitrate,
           orElse: () => throw Exception('Uygun ses akışı bulunamadı.')
       );
@@ -151,6 +158,10 @@ class _AramaSecilenPageState extends State<AramaSecilenPage> {
       await stream.pipe(output);
       await output.close();
 
+      setState(() {
+        _downloadedFilePath = path;
+      });
+
       await _showNotification('Download Complete', 'File saved to $path', 100);
     }
   }
@@ -158,11 +169,16 @@ class _AramaSecilenPageState extends State<AramaSecilenPage> {
   Future<File> _mergeVideoAndAudio(String videoPath, String audioPath, String filename) async {
     final outputPath = 'storage/emulated/0/Download/TubDown/Videos/$filename';
     final arguments = [
-      '-i', videoPath,
-      '-i', audioPath,
-      '-c:v', 'copy',
-      '-c:a', 'aac',
-      '-strict', 'experimental',
+      '-i',
+      videoPath,
+      '-i',
+      audioPath,
+      '-c:v',
+      'copy',
+      '-c:a',
+      'aac',
+      '-strict',
+      'experimental',
       outputPath
     ];
     await _flutterFFmpeg.executeWithArguments(arguments);
@@ -179,8 +195,7 @@ class _AramaSecilenPageState extends State<AramaSecilenPage> {
   }
 
   Future<void> _showNotification(String title, String body, int progress) async {
-    AndroidNotificationDetails androidPlatformChannelSpecifics =
-    AndroidNotificationDetails(
+    AndroidNotificationDetails androidPlatformChannelSpecifics = AndroidNotificationDetails(
       'your_channel_id',
       'your_channel_name',
       channelDescription: 'your_channel_description',
@@ -190,8 +205,7 @@ class _AramaSecilenPageState extends State<AramaSecilenPage> {
       maxProgress: 100,
     );
 
-    NotificationDetails platformChannelSpecifics =
-    NotificationDetails(android: androidPlatformChannelSpecifics);
+    NotificationDetails platformChannelSpecifics = NotificationDetails(android: androidPlatformChannelSpecifics);
 
     await flutterLocalNotificationsPlugin.show(
       0,
@@ -202,13 +216,31 @@ class _AramaSecilenPageState extends State<AramaSecilenPage> {
     );
   }
 
+  void _playDownloadedFile() {
+    if (_selectedFormat == 'Video' && _downloadedFilePath != null) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => VideoPlayerScreen(videoPath: _downloadedFilePath!),
+        ),
+      );
+    } else if (_selectedFormat == 'Ses' && _downloadedFilePath != null) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => AudioPlayerScreen(audioPath: _downloadedFilePath!),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text('Video Detayları'),
         centerTitle: true,
-        backgroundColor: Colors.black,
+        backgroundColor: Color(0xFF808080),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -225,65 +257,65 @@ class _AramaSecilenPageState extends State<AramaSecilenPage> {
               style: TextStyle(fontSize: 16, color: Colors.white54),
             ),
             SizedBox(height: 16),
-            Image.network(widget.video.thumbnails.mediumResUrl), // 'medium' boyutu kullanıldı
+            Image.network(widget.video.thumbnails.mediumResUrl),
             SizedBox(height: 16),
             DropdownButton<String>(
               value: _selectedFormat,
-              dropdownColor: Colors.black,
-              style: TextStyle(color: Colors.white),
-              items: <String>['Video', 'Ses'].map((String value) {
+              items: ['Video', 'Ses'].map((format) {
                 return DropdownMenuItem<String>(
-                  value: value,
-                  child: Text(value),
+                  value: format,
+                  child: Text(format),
                 );
               }).toList(),
-              onChanged: (String? newValue) {
+              onChanged: (value) {
                 setState(() {
-                  _selectedFormat = newValue!;
-                  _selectedResolution = _selectedFormat == 'Video' ? (_availableResolutions.isNotEmpty ? _availableResolutions.first : null) : _selectedResolution;
-                  _selectedBitrate = _selectedFormat == 'Ses' ? (_availableBitrates.isNotEmpty ? _availableBitrates.first : null) : _selectedBitrate;
+                  _selectedFormat = value!;
                 });
               },
             ),
             if (_selectedFormat == 'Video')
               DropdownButton<String>(
                 value: _selectedResolution,
-                dropdownColor: Colors.black,
-                style: TextStyle(color: Colors.white),
-                items: _availableResolutions.map((String value) {
+                items: _availableResolutions.map((resolution) {
                   return DropdownMenuItem<String>(
-                    value: value,
-                    child: Text(value),
+                    value: resolution,
+                    child: Text(resolution),
                   );
                 }).toList(),
-                onChanged: (String? newValue) {
+                onChanged: (value) {
                   setState(() {
-                    _selectedResolution = newValue!;
+                    _selectedResolution = value!;
                   });
                 },
               ),
             if (_selectedFormat == 'Ses')
               DropdownButton<String>(
                 value: _selectedBitrate,
-                dropdownColor: Colors.black,
-                style: TextStyle(color: Colors.white),
-                items: _availableBitrates.map((String value) {
+                items: _availableBitrates.map((bitrate) {
                   return DropdownMenuItem<String>(
-                    value: value,
-                    child: Text(value),
+                    value: bitrate,
+                    child: Text(bitrate),
                   );
                 }).toList(),
-                onChanged: (String? newValue) {
+                onChanged: (value) {
                   setState(() {
-                    _selectedBitrate = newValue!;
+                    _selectedBitrate = value!;
                   });
                 },
               ),
             SizedBox(height: 16),
             ElevatedButton(
-              onPressed: _downloadFile,
-              child: Text('İndir'),
+              onPressed: _isDownloading ? null : _downloadFile,
+              child: _isDownloading ? CircularProgressIndicator() : Text('Download'),
             ),
+            if (_showPlayButton)
+              Container(
+                margin: EdgeInsets.only(top: 16.0), // Adjust the margin value as needed
+                child: ElevatedButton(
+                  onPressed: _playDownloadedFile,
+                  child: Text('Play'),
+                ),
+              )
           ],
         ),
       ),
