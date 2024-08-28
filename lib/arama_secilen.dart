@@ -5,11 +5,8 @@ import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:video_player/video_player.dart';
-import 'package:audioplayers/audioplayers.dart';
 import 'video_player_screen.dart';
 import 'audio_player_screen.dart';
-
 
 class AramaSecilenPage extends StatefulWidget {
   final Video video;
@@ -112,8 +109,8 @@ class _AramaSecilenPageState extends State<AramaSecilenPage> {
       audioStreamInfo = manifest.audioOnly.reduce((a, b) => a.bitrate.kiloBitsPerSecond > b.bitrate.kiloBitsPerSecond ? a : b);
 
       videoStreamInfo = manifest.videoOnly.firstWhere(
-              (e) => e.videoQualityLabel == _selectedResolution,
-          orElse: () => throw Exception('Uygun video akışı bulunamadı.')
+            (e) => e.videoQualityLabel == _selectedResolution,
+        orElse: () => throw Exception('Uygun video akışı bulunamadı.'),
       );
 
       final videoStream = _youtubeExplode.videos.streamsClient.get(videoStreamInfo);
@@ -145,8 +142,8 @@ class _AramaSecilenPageState extends State<AramaSecilenPage> {
       await _showNotification('Download Complete', 'File saved to ${outputFile.path}', 100);
     } else {
       audioStreamInfo = manifest.audioOnly.firstWhere(
-              (e) => '${e.bitrate.kiloBitsPerSecond} kbps' == _selectedBitrate,
-          orElse: () => throw Exception('Uygun ses akışı bulunamadı.')
+            (e) => '${e.bitrate.kiloBitsPerSecond} kbps' == _selectedBitrate,
+        orElse: () => throw Exception('Uygun ses akışı bulunamadı.'),
       );
 
       final stream = _youtubeExplode.videos.streamsClient.get(audioStreamInfo);
@@ -236,13 +233,15 @@ class _AramaSecilenPageState extends State<AramaSecilenPage> {
 
   @override
   Widget build(BuildContext context) {
+    final localization = Localizations.localeOf(context).languageCode;
+
     return Scaffold(
       appBar: AppBar(
-        title: Text('Video Detayları'),
+        title: Text(localization == 'tr' ? 'Video Detayları' : 'Video Details'),
         centerTitle: true,
         backgroundColor: Color(0xFF808080),
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -253,8 +252,8 @@ class _AramaSecilenPageState extends State<AramaSecilenPage> {
             ),
             SizedBox(height: 8),
             Text(
-              widget.video.description,
-              style: TextStyle(fontSize: 16, color: Colors.white54),
+              widget.video.description ?? '',
+              style: TextStyle(fontSize: 16, color: Colors.white70),
             ),
             SizedBox(height: 16),
             Image.network(widget.video.thumbnails.mediumResUrl),
@@ -264,58 +263,69 @@ class _AramaSecilenPageState extends State<AramaSecilenPage> {
               items: ['Video', 'Ses'].map((format) {
                 return DropdownMenuItem<String>(
                   value: format,
-                  child: Text(format),
+                  child: Text(format, style: TextStyle(color: Colors.white)),
                 );
               }).toList(),
               onChanged: (value) {
                 setState(() {
                   _selectedFormat = value!;
+                  _selectedResolution = null; // Reset resolution on format change
+                  _selectedBitrate = null; // Reset bitrate on format change
                 });
+                _fetchAvailableResolutions();
+                _fetchAvailableBitrates();
               },
+              dropdownColor: Color(0xFF303030),
             ),
-            if (_selectedFormat == 'Video')
+            if (_selectedFormat == 'Video') ...[
               DropdownButton<String>(
                 value: _selectedResolution,
                 items: _availableResolutions.map((resolution) {
                   return DropdownMenuItem<String>(
                     value: resolution,
-                    child: Text(resolution),
+                    child: Text(resolution, style: TextStyle(color: Colors.white)),
                   );
                 }).toList(),
                 onChanged: (value) {
                   setState(() {
-                    _selectedResolution = value!;
+                    _selectedResolution = value;
                   });
                 },
+                dropdownColor: Color(0xFF303030),
               ),
-            if (_selectedFormat == 'Ses')
+            ] else if (_selectedFormat == 'Ses') ...[
               DropdownButton<String>(
                 value: _selectedBitrate,
                 items: _availableBitrates.map((bitrate) {
                   return DropdownMenuItem<String>(
                     value: bitrate,
-                    child: Text(bitrate),
+                    child: Text(bitrate, style: TextStyle(color: Colors.white)),
                   );
                 }).toList(),
                 onChanged: (value) {
                   setState(() {
-                    _selectedBitrate = value!;
+                    _selectedBitrate = value;
                   });
                 },
+                dropdownColor: Color(0xFF303030),
               ),
+            ],
             SizedBox(height: 16),
             ElevatedButton(
               onPressed: _isDownloading ? null : _downloadFile,
-              child: _isDownloading ? CircularProgressIndicator() : Text('Download'),
+              child: Text(localization == 'tr' ? 'İndir' : 'Download'),
             ),
+            SizedBox(height: 16),
             if (_showPlayButton)
-              Container(
-                margin: EdgeInsets.only(top: 16.0), // Adjust the margin value as needed
-                child: ElevatedButton(
-                  onPressed: _playDownloadedFile,
-                  child: Text('Play'),
-                ),
-              )
+              ElevatedButton(
+                onPressed: _playDownloadedFile,
+                child: Text(localization == 'tr' ? 'Oynat' : 'Play'),
+              ),
+            SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(localization == 'tr' ? 'Geri' : 'Back'),
+            ),
           ],
         ),
       ),

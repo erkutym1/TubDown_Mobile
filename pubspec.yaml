@@ -3,7 +3,7 @@ description: "YouTube Video, Audio, Playlist Downloader"
 
 publish_to: 'none'
 
-version: 1.4.0+1
+version: 1.5.0+1
 
 environment:
   sdk: '>2.12.0'
@@ -22,6 +22,9 @@ dependencies:
   flutter_ffmpeg: ^0.4.0
   video_player: ^2.5.2
   audioplayers: 6.0.0
+  flutter_localizations:
+    sdk: flutter
+  intl: ^0.18.0
 
 dev_dependencies:
   flutter_test:
@@ -33,6 +36,11 @@ flutter:
   uses-material-design: true
   assets:
     - assets/images/opening.png
+    - assets/images/turkish.png
+    - assets/images/english.png
+    - assets/images/china.png
+    - assets/images/deutsch.png
+    - assets/images/arabic.png
 
 flutter_launcher_icons:
   android: true

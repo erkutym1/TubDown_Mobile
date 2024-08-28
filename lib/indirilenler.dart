@@ -3,6 +3,7 @@ import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 import 'package:tubdown/video_player_screen.dart';
 import 'package:tubdown/audio_player_screen.dart';
+import 'package:intl/intl.dart';
 
 class IndirilenlerPage extends StatefulWidget {
   // Add a key parameter to the constructor
@@ -11,6 +12,33 @@ class IndirilenlerPage extends StatefulWidget {
   @override
   _IndirilenlerPageState createState() => _IndirilenlerPageState();
 }
+
+class Localization {
+  static const Map<String, Map<String, String>> _localizedValues = {
+    'en': {
+      'downloads': 'Downloads',
+      'videos': 'Videos',
+      'audios': 'Audios',
+      'videoTitle': 'Video Title',
+      'audioTitle': 'Audio Title',
+      'noFiles': 'No files available',
+    },
+    'tr': {
+      'downloads': 'İndirilenler',
+      'videos': 'Videolar',
+      'audios': 'Sesler',
+      'videoTitle': 'Video Başlığı',
+      'audioTitle': 'Ses Başlığı',
+      'noFiles': 'Dosya bulunamadı',
+    }
+  };
+
+  static String of(BuildContext context, String key) {
+    final locale = Localizations.localeOf(context).languageCode;
+    return _localizedValues[locale]?[key] ?? key;
+  }
+}
+
 
 class _IndirilenlerPageState extends State<IndirilenlerPage> {
   List<FileSystemEntity> _files = [];
@@ -64,7 +92,7 @@ class _IndirilenlerPageState extends State<IndirilenlerPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('İndirilenler'),
+        title: Text(Localization.of(context, 'downloads')),
         centerTitle: true,
       ),
       body: Column(
@@ -83,7 +111,7 @@ class _IndirilenlerPageState extends State<IndirilenlerPage> {
                         _getDirectoryPath();
                       });
                     },
-                    child: Text('Videolar'),
+                    child: Text(Localization.of(context, 'videos')),
                   ),
                 ),
                 SizedBox(
@@ -95,14 +123,16 @@ class _IndirilenlerPageState extends State<IndirilenlerPage> {
                         _getDirectoryPath();
                       });
                     },
-                    child: Text('Sesler'),
+                    child: Text(Localization.of(context, 'audios')),
                   ),
                 ),
               ],
             ),
           ),
           Expanded(
-            child: ListView.builder(
+            child: _files.isEmpty
+                ? Center(child: Text(Localization.of(context, 'noFiles')))
+                : ListView.builder(
               itemCount: _files.length,
               itemBuilder: (context, index) {
                 final file = _files[index];

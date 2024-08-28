@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
-import 'dart:io'; // Import dart:io for File
+import 'dart:io';
 
 class AudioPlayerScreen extends StatefulWidget {
   final String audioPath;
@@ -73,11 +73,20 @@ class _AudioPlayerScreenState extends State<AudioPlayerScreen> {
 
   @override
   Widget build(BuildContext context) {
-    String audioTitle = widget.audioPath.split('/').last; // Extract title from path
+    String audioTitle = widget.audioPath.split('/').last;
+
+    // Localization Strings
+    String audioPlayerTitle = Localizations.localeOf(context).languageCode == 'tr'
+        ? 'Ses Oynatıcı'
+        : 'Audio Player';
+
+    String playText = Localizations.localeOf(context).languageCode == 'tr'
+        ? (_isPlaying ? 'Duraklat' : 'Oynat')
+        : (_isPlaying ? 'Pause' : 'Play');
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Audio Player'),
+        title: Text(audioPlayerTitle),
         centerTitle: true,
         backgroundColor: Color(0xFF808080),
       ),
@@ -120,7 +129,7 @@ class _AudioPlayerScreenState extends State<AudioPlayerScreen> {
             SizedBox(height: 20),
             ElevatedButton(
               onPressed: _togglePlayPause,
-              child: Text(_isPlaying ? 'Pause' : 'Play'),
+              child: Text(playText),
             ),
           ],
         ),

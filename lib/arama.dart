@@ -35,13 +35,15 @@ class _AramaPageState extends State<AramaPage> {
 
   @override
   Widget build(BuildContext context) {
+    final localization = Localizations.localeOf(context).languageCode;
+
     return Scaffold(
       appBar: AppBar(
-        title: Text('YouTube Arama'),
+        title: Text(localization == 'tr' ? 'YouTube Arama' : 'YouTube Search'),
         centerTitle: true,
         backgroundColor: Colors.black,
       ),
-      body: Padding(
+      body: SingleChildScrollView( // Wrap the Column with SingleChildScrollView
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -49,12 +51,12 @@ class _AramaPageState extends State<AramaPage> {
             TextField(
               controller: _searchController,
               decoration: InputDecoration(
-                labelText: 'Arama Terimi',
+                labelText: localization == 'tr' ? 'Arama Terimi' : 'Search Term',
                 labelStyle: TextStyle(color: Colors.white),
                 border: OutlineInputBorder(),
                 filled: true,
                 fillColor: Colors.black,
-                hintText: 'Arama yapın...',
+                hintText: localization == 'tr' ? 'Arama yapın...' : 'Search...',
                 hintStyle: TextStyle(color: Colors.white54),
               ),
               style: TextStyle(color: Colors.white),
@@ -67,7 +69,7 @@ class _AramaPageState extends State<AramaPage> {
                   _searchVideos(query);
                 }
               },
-              child: Text('Ara'),
+              child: Text(localization == 'tr' ? 'Ara' : 'Search'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.black, // primary yerine backgroundColor kullanın
                 foregroundColor: Colors.white,
@@ -76,48 +78,48 @@ class _AramaPageState extends State<AramaPage> {
             SizedBox(height: 16),
             _isLoading
                 ? Center(child: CircularProgressIndicator())
-                : Expanded(
-              child: ListView.builder(
-                itemCount: _searchResults.length,
-                itemBuilder: (context, index) {
-                  final video = _searchResults[index];
-                  return Container(
-                    margin: EdgeInsets.only(bottom: 8.0),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(12.0),
-                      child: Card(
-                        color: Colors.black,
-                        elevation: 4.0,
-                        child: ListTile(
-                          contentPadding: EdgeInsets.all(8.0),
-                          leading: Image.network(
-                            video.thumbnails.mediumResUrl?? '', // null check ekleyin
-                            width: 100,
-                            fit: BoxFit.cover,
-                          ),
-                          title: Text(
-                            video.title,
-                            style: TextStyle(color: Colors.white),
-                          ),
-                          subtitle: Text(
-                            video.description,
-                            style: TextStyle(color: Colors.white54),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => AramaSecilenPage(video: video),
-                              ),
-                            );
-                          },
+                : ListView.builder(
+              shrinkWrap: true, // Prevent ListView from expanding
+              physics: NeverScrollableScrollPhysics(), // Disable ListView scrolling
+              itemCount: _searchResults.length,
+              itemBuilder: (context, index) {
+                final video = _searchResults[index];
+                return Container(
+                  margin: EdgeInsets.only(bottom: 8.0),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12.0),
+                    child: Card(
+                      color: Colors.black,
+                      elevation: 4.0,
+                      child: ListTile(
+                        contentPadding: EdgeInsets.all(8.0),
+                        leading: Image.network(
+                          video.thumbnails.mediumResUrl ?? '', // null check ekleyin
+                          width: 100,
+                          fit: BoxFit.cover,
                         ),
+                        title: Text(
+                          video.title,
+                          style: TextStyle(color: Colors.white),
+                        ),
+                        subtitle: Text(
+                          video.description,
+                          style: TextStyle(color: Colors.white54),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => AramaSecilenPage(video: video),
+                            ),
+                          );
+                        },
                       ),
                     ),
-                  );
-                },
-              ),
+                  ),
+                );
+              },
             ),
           ],
         ),

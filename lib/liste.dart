@@ -5,11 +5,53 @@ import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:intl/intl.dart';
 
 class ListePage extends StatefulWidget {
   @override
   _ListePageState createState() => _ListePageState();
 }
+
+class Localization {
+  static const Map<String, Map<String, String>> _localizedValues = {
+    'en': {
+      'playlistDownloader': 'Playlist Downloader',
+      'pastePlaylistLink': 'Paste YouTube playlist link',
+      'getPlaylist': 'Get Playlist',
+      'download': 'Download',
+      'playlistError': 'Error fetching playlist',
+      'downloadStarted': 'Download Started',
+      'downloadingVideo': 'Downloading Video',
+      'downloadCompleted': 'Download Completed',
+      'allVideosDownloaded': 'All videos downloaded',
+      'videoDownloaded': 'Video Downloaded',
+      'audioDownloaded': 'Audio Downloaded',
+      'fileSaved': 'File saved',
+      'downloadError': 'Download Error'
+    },
+    'tr': {
+      'playlistDownloader': 'Çalma Listesi İndirici',
+      'pastePlaylistLink': 'YouTube çalma listesi bağlantısını yapıştırın',
+      'getPlaylist': 'Listeyi Al',
+      'download': 'İndir',
+      'playlistError': 'Çalma listesi alınırken hata',
+      'downloadStarted': 'İndirme Başladı',
+      'downloadingVideo': 'Video İndiriliyor',
+      'downloadCompleted': 'İndirme Tamamlandı',
+      'allVideosDownloaded': 'Tüm videolar indirildi',
+      'videoDownloaded': 'Video İndirildi',
+      'audioDownloaded': 'Ses İndirildi',
+      'fileSaved': 'Dosya kaydedildi',
+      'downloadError': 'İndirme Hatası'
+    }
+  };
+
+  static String of(BuildContext context, String key) {
+    final locale = Localizations.localeOf(context).languageCode;
+    return _localizedValues[locale]?[key] ?? key;
+  }
+}
+
 
 class _ListePageState extends State<ListePage> {
   final TextEditingController _controller = TextEditingController();
@@ -62,7 +104,10 @@ class _ListePageState extends State<ListePage> {
       for (int i = 0; i < totalVideos; i++) {
         final video = videos[i];
         await _showNotification(
-            'İndirme Başladı', 'Video ${i + 1} / $totalVideos indiriliyor...', i + 1, totalVideos);
+            Localization.of(context, 'downloadStarted'),
+            '${Localization.of(context, 'downloadingVideo')} ${i + 1} / $totalVideos...',
+            i + 1,
+            totalVideos);
 
         if (_selectedFormat == 'Video') {
           await _downloadVideoWithAudio(video);
@@ -71,7 +116,8 @@ class _ListePageState extends State<ListePage> {
         }
       }
 
-      await _showNotification('İndirme Tamamlandı', 'Tüm videolar indirildi.', 100, 100);
+      await _showNotification(Localization.of(context, 'downloadCompleted'),
+          Localization.of(context, 'allVideosDownloaded'), 100, 100);
     } catch (e) {
       print('Bir hata oluştu: $e');
     }
@@ -79,8 +125,7 @@ class _ListePageState extends State<ListePage> {
 
   Future<void> _downloadVideoWithAudio(Video video) async {
     try {
-      final manifest =
-      await _youtubeExplode.videos.streamsClient.getManifest(video.id);
+      final manifest = await _youtubeExplode.videos.streamsClient.getManifest(video.id);
 
       final audioStreamInfo = manifest.audioOnly
           .reduce((a, b) => a.bitrate.kiloBitsPerSecond > b.bitrate.kiloBitsPerSecond ? a : b);
@@ -112,7 +157,8 @@ class _ListePageState extends State<ListePage> {
       await videoFile.delete();
       await audioFile.delete();
 
-      await _showNotification('Video İndirildi', 'Dosya kaydedildi: ${outputFile.path}', 100, 100);
+      await _showNotification(Localization.of(context, 'videoDownloaded'),
+          '${Localization.of(context, 'fileSaved')}: ${outputFile.path}', 100, 100);
     } catch (e) {
       print('Video ve ses indirilemedi: $e');
     }
@@ -120,8 +166,7 @@ class _ListePageState extends State<ListePage> {
 
   Future<void> _downloadAudioOnly(Video video) async {
     try {
-      final manifest =
-      await _youtubeExplode.videos.streamsClient.getManifest(video.id);
+      final manifest = await _youtubeExplode.videos.streamsClient.getManifest(video.id);
       final audioStreamInfo = manifest.audioOnly
           .reduce((a, b) => a.bitrate.kiloBitsPerSecond > b.bitrate.kiloBitsPerSecond ? a : b);
 
@@ -136,7 +181,8 @@ class _ListePageState extends State<ListePage> {
       await stream.pipe(output);
       await output.close();
 
-      await _showNotification('Ses İndirildi', 'Dosya kaydedildi: $path', 100, 100);
+      await _showNotification(Localization.of(context, 'audioDownloaded'),
+          '${Localization.of(context, 'fileSaved')}: $path', 100, 100);
     } catch (e) {
       print('Ses indirilemedi: $e');
     }
@@ -204,7 +250,7 @@ class _ListePageState extends State<ListePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Playlist İndirici'),
+        title: Text(Localization.of(context, 'playlistDownloader')),
         backgroundColor: Colors.black,
       ),
       body: Padding(
@@ -215,13 +261,13 @@ class _ListePageState extends State<ListePage> {
             TextField(
               controller: _controller,
               decoration: InputDecoration(
-                hintText: 'YouTube playlist linkini yapıştırın',
+                hintText: Localization.of(context, 'pastePlaylistLink'),
               ),
             ),
             SizedBox(height: 16),
             ElevatedButton(
               onPressed: _getPlaylistDetails,
-              child: Text('Get Playlist'),
+              child: Text(Localization.of(context, 'getPlaylist')),
             ),
             if (_playlistTitle != null) ...[
               SizedBox(height: 16),
@@ -249,7 +295,7 @@ class _ListePageState extends State<ListePage> {
               SizedBox(height: 16),
               ElevatedButton(
                 onPressed: _downloadPlaylist,
-                child: Text('İndir'),
+                child: Text(Localization.of(context, 'download')),
               ),
             ],
           ],

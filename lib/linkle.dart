@@ -7,8 +7,13 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_ffmpeg/flutter_ffmpeg.dart'; // FFmpeg paketi ekleyin
 
 class LinklePage extends StatefulWidget {
+  final String language; // Add this line
+
+  LinklePage({required this.language}); // Update constructor
+
   @override
   _LinklePageState createState() => _LinklePageState();
+
 }
 
 class _LinklePageState extends State<LinklePage> {
@@ -203,7 +208,7 @@ class _LinklePageState extends State<LinklePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Linkle İndir'),
+        title: Text(widget.language == 'tr' ? 'Linkle İndir' : 'Download from Link'),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
@@ -214,11 +219,11 @@ class _LinklePageState extends State<LinklePage> {
             TextField(
               controller: _urlController,
               decoration: InputDecoration(
-                labelText: 'YouTube Video Linki',
+                labelText: widget.language == 'tr' ? 'YouTube Video Linki' : 'YouTube Video Link',
                 border: OutlineInputBorder(),
                 filled: true,
                 fillColor: Colors.black,
-                hintText: 'YouTube video URL girin',
+                hintText: widget.language == 'tr' ? 'YouTube video URL girin' : 'Enter YouTube video URL',
                 hintStyle: TextStyle(color: Colors.white),
                 labelStyle: TextStyle(color: Colors.white),
               ),
@@ -232,12 +237,12 @@ class _LinklePageState extends State<LinklePage> {
                   _fetchVideoTitle(url);
                 }
               },
-              child: Text('Get Video Info'),
+              child: Text(widget.language == 'tr' ? 'Video Bilgilerini Getir' : 'Get Video Info'),
             ),
             SizedBox(height: 16),
             if (_videoTitle.isNotEmpty) ...[
               Text(
-                'Video Başlığı:',
+                widget.language == 'tr' ? 'Video Başlığı:' : 'Video Title:',
                 style: TextStyle(fontSize: 16, color: Colors.white),
               ),
               SizedBox(height: 8),
@@ -250,7 +255,7 @@ class _LinklePageState extends State<LinklePage> {
                 value: _selectedFormat,
                 dropdownColor: Colors.black,
                 style: TextStyle(color: Colors.white),
-                items: <String>['Video', 'Ses'].map((String value) {
+                items: <String>[widget.language == 'tr' ? 'Video' : 'Video', widget.language == 'tr' ? 'Ses' : 'Audio'].map((String value) {
                   return DropdownMenuItem<String>(
                     value: value,
                     child: Text(value),
@@ -259,13 +264,13 @@ class _LinklePageState extends State<LinklePage> {
                 onChanged: (String? newValue) {
                   setState(() {
                     _selectedFormat = newValue!;
-                    _selectedResolution = _selectedFormat == 'Video' && _videoResolutions.isNotEmpty ? _videoResolutions.first : null;
-                    _selectedBitrate = _selectedFormat == 'Ses' && _audioBitrates.isNotEmpty ? _audioBitrates.first : null;
+                    _selectedResolution = _selectedFormat == (widget.language == 'tr' ? 'Video' : 'Video') && _videoResolutions.isNotEmpty ? _videoResolutions.first : null;
+                    _selectedBitrate = _selectedFormat == (widget.language == 'tr' ? 'Ses' : 'Audio') && _audioBitrates.isNotEmpty ? _audioBitrates.first : null;
                   });
                 },
               ),
               SizedBox(height: 16),
-              if (_selectedFormat == 'Video') ...[
+              if (_selectedFormat == (widget.language == 'tr' ? 'Video' : 'Video')) ...[
                 DropdownButton<String>(
                   value: _selectedResolution,
                   dropdownColor: Colors.black,
@@ -283,7 +288,7 @@ class _LinklePageState extends State<LinklePage> {
                   },
                 ),
               ],
-              if (_selectedFormat == 'Ses') ...[
+              if (_selectedFormat == (widget.language == 'tr' ? 'Ses' : 'Audio')) ...[
                 DropdownButton<String>(
                   value: _selectedBitrate,
                   dropdownColor: Colors.black,
@@ -307,11 +312,11 @@ class _LinklePageState extends State<LinklePage> {
                   await _requestPermissions();
                   String url = _urlController.text.trim();
                   if (url.isNotEmpty) {
-                    String filename = '${_videoTitle}_${DateTime.now().millisecondsSinceEpoch}.${_selectedFormat == 'Video' ? 'mp4' : 'mp3'}';
+                    String filename = '${_videoTitle}_${DateTime.now().millisecondsSinceEpoch}.${_selectedFormat == (widget.language == 'tr' ? 'Video' : 'Video') ? 'mp4' : 'mp3'}';
                     await _downloadFile(url, filename);
                   }
                 },
-                child: Text('İndir'),
+                child: Text(widget.language == 'tr' ? 'İndir' : 'Download'),
               ),
             ],
           ],
@@ -319,4 +324,5 @@ class _LinklePageState extends State<LinklePage> {
       ),
     );
   }
+
 }

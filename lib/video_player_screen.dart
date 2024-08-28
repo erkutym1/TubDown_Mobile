@@ -63,9 +63,20 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    String videoTitle = widget.videoPath.split('/').last;
+
+    // Localization Strings
+    String videoPlayerTitle = Localizations.localeOf(context).languageCode == 'tr'
+        ? 'Video Oynatıcı'
+        : 'Video Player';
+
+    String playText = Localizations.localeOf(context).languageCode == 'tr'
+        ? (_isPlaying ? 'Duraklat' : 'Oynat')
+        : (_isPlaying ? 'Pause' : 'Play');
+
     return Scaffold(
       appBar: AppBar(
-        title: Text('Video Player'),
+        title: Text(videoPlayerTitle),
         centerTitle: true,
         backgroundColor: Color(0xFF808080),
       ),
@@ -103,7 +114,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                 SizedBox(height: 20),
                 ElevatedButton(
                   onPressed: _togglePlayPause,
-                  child: Text(_isPlaying ? 'Pause' : 'Play'),
+                  child: Text(playText),
                 ),
               ],
             ),
